@@ -1,4 +1,4 @@
-#Algoritmai. Jų paskirtis ir funkcijos
+#1. Algoritmai. Jų paskirtis ir funkcijos
 
 #Parašykite algoritmą, kuris suskaičiuoja kiek yra skaičių, dalinamų iš 7 nuo 1 iki N.
 
