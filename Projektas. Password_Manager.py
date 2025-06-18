@@ -1,5 +1,6 @@
 import json
 import hashlib
+from zxcvbn import zxcvbn
 from abc import ABC, abstractmethod
 
 # Composite Pattern Implementation
@@ -26,6 +27,7 @@ class PasswordComponent(ABC):
 class PasswordEntry(PasswordComponent):
     def __init__(self, username, password, website):
         self.username = username
+        self._password = password # Laikinas slaptažodis saugomas atmintyje (nėra saugomas faile)
         self._password_hash = self._hash_password(password)  # Slaptažodis saugomas kaip hash
         self.website = website
 
@@ -38,9 +40,12 @@ class PasswordEntry(PasswordComponent):
         print(f"{' ' * indent}🔒 {self.website} | User: {self.username} | Security: {self.get_security_score()}/10")
     
     def get_security_score(self):
-        # Įvertina slaptažodžio stiprumą (čia supaprastinta logika). Realiai galima naudoti biblioteką 'zxcvbn' arba panašias.
-        length = len(self._password_hash)  # Hash ilgis != tikras slaptažodžio ilgis (čia tik pavyzdys)
-        return min(10, max(1, length // 6))  # Imituojamas saugumo įvertis 1-10
+        # Įvertina slaptažodžio stiprumą naudodamas zxcvbn biblioteką.
+        if self._password:
+            result = zxcvbn(self._password)
+            score = result['score']  # zxcvbn grąžina saugumo įvertį.
+            return (score + 1) * 2  # Paverčiame į skalę nuo 2 iki 10
+        return 0  # Jei slaptažodis nenurodytas, grąžiname 0
     
     def to_dict(self):
         # Konvertuojame slaptažodžio įrašą į žodyną (dict), kad būtų galima išsaugoti į JSON faile.
@@ -97,12 +102,60 @@ def load_from_file(filename="passwords.json"):
         return _dict_to_component(data)  # Konvertuoja žodyną atgal į komponentą.
     except FileNotFoundError:
         return PasswordCategory("Kategorijos")  # Sukuria naują šakninę kategoriją
+    
+def delete_entry_orcategory(db):
+    print("\n[ŠALINTI SLAPTAŽODĮ ARBA KATEGORIJĄ]")
+    if not db.children:
+        print("Nėra jokių kategorijų ar slaptažodžių.")
+        return
+    for idx, child in enumerate(db.children):
+        print(f"{idx + 1}. 📁 {child.name}")
+
+    try:
+        category_idx = int(input("Pasirinkite kategoriją): ")) - 1
+        category = db.children[category_idx]
+
+        print(f'\n{category.name} turinys')
+        if not category.children:
+            confirm = input("Ši kategorija tuščia. Ar tikrai norite ją ištrinti? (taip/ne): ").strip().lower()
+            if confirm == 'taip':
+                db.children.pop(category_idx)
+                print(f"Kategorija '{category.name}' ištrinta.")
+            return
+        
+        for j, sub in enumerate(category.children):
+            if isinstance(sub, PasswordEntry):
+                print(f"{j + 1}. 🔒 {sub.website} | User: {sub.username}")
+            elif isinstance(sub, PasswordCategory):
+                print(f"{j + 1}. 📁 {sub.name}")
+                      
+        sub_idx = input("Pasirinkite ką trinti (skaičius), arba spauskite Enter, kad trinti visą kategoriją: ").strip()
+
+        if sub_idx == "":
+            confirm = input(f"Ar tikrai norite ištrinti visą kategoriją '{category.name}'? (taip/ne): ").strip().lower()
+            if confirm == "taip":
+                db.children.pop(category_idx)
+                print("Kategorija ištrinta.")
+            else:
+                print("Veiksmas atšauktas.")
+        else:
+            sub_idx = int(sub_idx) - 1
+            removed = category.children.pop(sub_idx)
+            if isinstance(removed, PasswordEntry):
+                print(f"Slaptažodis '{removed.website}' ištrintas.")
+            else:
+                print(f"Kategorija '{removed.name}' ištrinta.")
+
+    except (ValueError, IndexError):
+        print("Neteisingas pasirinkimas. Bandykite dar kartą.")
+
         
 def _dict_to_component(data):
     # Rekursyviai konvertuoja žodyną iš JSON atgal į PasswordComponent objektus.
     if data["type"] == "entry":
         entry = PasswordEntry(data["username"], "", data["website"])  # Slaptažodis nenurodytas (hash'as jau yra)
         entry._password_hash = data["password_hash"]  # Atstatomas hash'as
+        entry._password = None  # Nustatome, kad slaptažodis nėra saugomas atmintyje
         return entry
     elif data["type"] == "category":
         category = PasswordCategory(data["name"])
@@ -119,7 +172,8 @@ def print_menu():
     print("1. Peržiūrėti turimas paskyras")
     print("2. Pridėti naują kategoriją")
     print("3. Pridėti naują slaptažodį")
-    print("4. Išsaugoti ir išeiti")
+    print("4. Ištrinti slaptažodžį arba kategoriją")
+    print("5. Išsaugoti ir išeiti")
     print("=" * 30)    
         
 # Pagrindinė programos logika (konsolės meniu)
@@ -152,6 +206,8 @@ def main():
             category_idx = int(input("Pasirinkite kategoriją į kurią norite įkelti slaptažodį (skaičius): ")) - 1
             db.children[category_idx].add(new_entry)
         elif choice == "4":
+            delete_entry_orcategory(db)
+        elif choice == "5":
             save_to_file(db) # Išsaugo visą DB į failą
             print("Duomenys išsaugoti. Programa baigta")
             break
