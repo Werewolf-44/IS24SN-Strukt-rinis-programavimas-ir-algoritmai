@@ -71,7 +71,7 @@ class PasswordCategory(PasswordComponent):
         # Atvaizduoja visą kategorijos hierarchiją su įtrauktais tarpais.
         print(f"{' ' * indent}📁 {self.name} (Avg Security: {self.get_security_score()}/10)")
         for child in self.children:
-            child.display(indent + 4)  # Rekursyviai kviečia vaikų display() metodus
+            child.display(indent + 4)  # Kviečia vaikų display() metodus
     
     def get_security_score(self):
         # Skaičiuoja vidutinį saugumo įvertį visoms kategorijos dalims. Jei kategorija tuščia, grąžina 0.
@@ -84,7 +84,7 @@ class PasswordCategory(PasswordComponent):
         return {
             "type": "category",
             "name": self.name,
-            "children": [child.to_dict() for child in self.children]  # Rekursyviai kviečia vaikų to_dict()
+            "children": [child.to_dict() for child in self.children] 
         }
 
 # Failų operacijos (JSON)
@@ -151,7 +151,7 @@ def delete_entry_orcategory(db):
 
         
 def _dict_to_component(data):
-    # Rekursyviai konvertuoja žodyną iš JSON atgal į PasswordComponent objektus.
+    # Konvertuoja žodyną iš JSON atgal į PasswordComponent objektus.
     if data["type"] == "entry":
         entry = PasswordEntry(data["username"], "", data["website"])  # Slaptažodis nenurodytas (hash'as jau yra)
         entry._password_hash = data["password_hash"]  # Atstatomas hash'as
@@ -160,7 +160,7 @@ def _dict_to_component(data):
     elif data["type"] == "category":
         category = PasswordCategory(data["name"])
         for child_data in data["children"]:
-            category.add(_dict_to_component(child_data))  # Rekursyviai prideda vaikus
+            category.add(_dict_to_component(child_data))
         return category
     
 # Meniu
