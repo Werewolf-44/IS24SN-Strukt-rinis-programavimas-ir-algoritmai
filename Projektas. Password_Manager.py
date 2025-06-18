@@ -15,7 +15,6 @@ class PasswordComponent(ABC):
     @abstractmethod
     def get_security_score(self):
         # Privalomas metodas, grąžinantis saugumo įvertinimą (skalėje 0-10).
-        # Turi būti implementuotas ir 'lapuose' (PasswordEntry), ir 'kompozituose' (PasswordCategory).
         pass
 
     @abstractmethod
@@ -43,7 +42,7 @@ class PasswordEntry(PasswordComponent):
         # Įvertina slaptažodžio stiprumą naudodamas zxcvbn biblioteką.
         if self._password:
             result = zxcvbn(self._password)
-            score = result['score']  # zxcvbn grąžina saugumo įvertį.
+            score = result['score']
             return (score + 1) * 2  # Paverčiame į skalę nuo 2 iki 10
         return 0  # Jei slaptažodis nenurodytas, grąžiname 0
     
@@ -71,7 +70,7 @@ class PasswordCategory(PasswordComponent):
         # Atvaizduoja visą kategorijos hierarchiją su įtrauktais tarpais.
         print(f"{' ' * indent}📁 {self.name} (Avg Security: {self.get_security_score()}/10)")
         for child in self.children:
-            child.display(indent + 4)  # Kviečia vaikų display() metodus
+            child.display(indent + 4)  # Kviečia vaikinius display() metodus
     
     def get_security_score(self):
         # Skaičiuoja vidutinį saugumo įvertį visoms kategorijos dalims. Jei kategorija tuščia, grąžina 0.
@@ -80,7 +79,7 @@ class PasswordCategory(PasswordComponent):
         return sum(child.get_security_score() for child in self.children) // len(self.children)
     
     def to_dict(self):
-        # Konvertuoja kategoriją ir jos vaikus į žodyną, kad būtų galima išsaugoti JSON faile.
+        # Konvertuoja kategoriją ir jos vaikinius įrašus į žodyną, kad būtų galima išsaugoti JSON faile.
         return {
             "type": "category",
             "name": self.name,
@@ -103,7 +102,7 @@ def load_from_file(filename="passwords.json"):
     except FileNotFoundError:
         return PasswordCategory("Kategorijos")  # Sukuria naują šakninę kategoriją
     
-def delete_entry_orcategory(db):
+def delete_entry_or_category(db):
     print("\n[ŠALINTI SLAPTAŽODĮ ARBA KATEGORIJĄ]")
     if not db.children:
         print("Nėra jokių kategorijų ar slaptažodžių.")
@@ -153,9 +152,9 @@ def delete_entry_orcategory(db):
 def _dict_to_component(data):
     # Konvertuoja žodyną iš JSON atgal į PasswordComponent objektus.
     if data["type"] == "entry":
-        entry = PasswordEntry(data["username"], "", data["website"])  # Slaptažodis nenurodytas (hash'as jau yra)
-        entry._password_hash = data["password_hash"]  # Atstatomas hash'as
-        entry._password = None  # Nustatome, kad slaptažodis nėra saugomas atmintyje
+        entry = PasswordEntry(data["username"], "", data["website"])
+        entry._password_hash = data["password_hash"]
+        entry._password = None
         return entry
     elif data["type"] == "category":
         category = PasswordCategory(data["name"])
@@ -206,7 +205,7 @@ def main():
             category_idx = int(input("Pasirinkite kategoriją į kurią norite įkelti slaptažodį (skaičius): ")) - 1
             db.children[category_idx].add(new_entry)
         elif choice == "4":
-            delete_entry_orcategory(db)
+            delete_entry_or_category(db)
         elif choice == "5":
             save_to_file(db) # Išsaugo visą DB į failą
             print("Duomenys išsaugoti. Programa baigta")
