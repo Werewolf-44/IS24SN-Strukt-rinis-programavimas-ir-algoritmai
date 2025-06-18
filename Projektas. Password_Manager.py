@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 class PasswordComponent(ABC):
     @abstractmethod
     def display(self, indent=0):
-        # Privalomas metodas, kurį turi įgyvendinti visos vaikinės klasės.Naudojamas komponento atvaizdavimui konsolėje.
+        # Privalomas metodas, kurį turi įgyvendinti visos vaikinės klasės. Naudojamas komponento atvaizdavimui konsolėje.
         pass
 
     @abstractmethod
@@ -56,14 +56,14 @@ class PasswordEntry(PasswordComponent):
 class PasswordCategory(PasswordComponent):
     def __init__(self, name):
         self.name = name
-        self.children = []  # Čia saugomi vaikiniai komponentai (PasswordEntry arba PasswordCategory)
+        self.children = []  # Čia saugomi vaikiniai komponentai.
 
     def add(self, component):
-        # Prideda vaikinį komponentą (slaptažodį arba kitą kategoriją)."""
+        # Prideda vaikinį komponentą (slaptažodį arba kitą kategoriją).
         self.children.append(component)
 
     def display(self, indent=0):
-        # Atvaizduoja visą kategorijos hierarchiją su įtrauktais tarpais."""
+        # Atvaizduoja visą kategorijos hierarchiją su įtrauktais tarpais.
         print(f"{' ' * indent}📁 {self.name} (Avg Security: {self.get_security_score()}/10)")
         for child in self.children:
             child.display(indent + 4)  # Rekursyviai kviečia vaikų display() metodus
@@ -87,14 +87,14 @@ class PasswordCategory(PasswordComponent):
 def save_to_file(db, filename="passwords.json"):
     # Išsaugo slaptažodžių duomenų bazę į JSON failą."""
         with open(filename, 'w') as f:
-            json.dump(db.to_dict(), f, indent=4)  # db.to_dict() rekursyviai konvertuoja visą hierarchiją į žodyną
+            json.dump(db.to_dict(), f, indent=4)  # db.to_dict() konvertuoja visą hierarchiją į žodyną
 
 def load_from_file(filename="passwords.json"):
     # Įkelia slaptažodžių duomenų bazę (db) iš JSON failo. Jei failas neegzistuoja, sukuria naują tuščią duomenų bazę.
     try: 
         with open(filename, 'r') as f:
             data = json.load(f)
-        return _dict_to_component(data)  # Konvertuoja žodyną atgal į komponentą (rekursyviai)
+        return _dict_to_component(data)  # Konvertuoja žodyną atgal į komponentą.
     except FileNotFoundError:
         return PasswordCategory("Kategorijos")  # Sukuria naują šakninę kategoriją
         
@@ -112,11 +112,11 @@ def _dict_to_component(data):
     
 # Meniu
 def print_menu():
-    # Atspausdina pagrindinę programos meniu.
+    # Atspausdina pagrindinį programos meniu.
     print("\n" + "=" * 30)
     print("Slaptažodžių tvarkyklė")
     print("=" * 30)
-    print("1. Peržiūrėti visus slaptažodžius")
+    print("1. Peržiūrėti turimas paskyras")
     print("2. Pridėti naują kategoriją")
     print("3. Pridėti naują slaptažodį")
     print("4. Išsaugoti ir išeiti")
@@ -133,19 +133,19 @@ def main():
 
         if choice == "1":
             print ("\n[VISI SLAPTAŽODŽIAI]")
-            db.display() # Rekursyviai atvaizduoja visą hierarchiją
+            db.display() # Atvaizduoja visą hierarchiją
         elif choice == "2":
             category_name = input ("Įveskite kategorijos pavadinimą: ")
             new_category = PasswordCategory(category_name)
             db.add(new_category) # Prideda naują kategoriją
         elif choice == "3":
-            #Sukuria naują slaptažodį
+            # Sukuria naują slaptažodį
             new_entry = PasswordEntry(
-                input("Svetainė: "),
                 input("Vartotojo vardas: "),
                 input("Slaptažodis: "),
+                input("Svetaine: "),
             )
-            # Prideda jį pasirinktoje kategorijoje
+            # Prideda slaptažodį pasirinktoje kategorijoje
             print("Esamos kategorijos:")
             for idx, child in enumerate(db.children):
                 print (f'{idx + 1}, {child.name}')
